@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\SpeakerResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\SpeakerResource\RelationManagers;
+use Filament\Tables\Columns\ImageColumn;
 
 class SpeakerResource extends Resource
 {
@@ -23,38 +24,7 @@ class SpeakerResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('email')
-                    ->email()
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Textarea::make('bio')
-                    ->required()
-                    ->maxLength(65535)
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('twitter_handle')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\CheckboxList::make('qualifications')
-                    ->columnSpanFull()
-                    ->searchable()
-                    ->bulkToggleable()
-                    ->options([
-                        'busineess-leader' => 'Businness Leader',
-                        'charisma' => 'Charismatic Speaker',
-                        'first-time' => 'First time Speaker',
-                        'hometown-hero' => 'HomeTown Hero',
-                        'humanitarian' => 'Works in Humanitarian Field',
-                        'laracasts-contributor' => 'Laracasts Contributor',
-                        'twitter-influencer' => 'Large Twitter Following',
-                        'youtube-influencer' => 'Large Youtube Following',
-                        'open-source' => 'Open Source Creator / Maintainer',
-                        'unique-perspective' => 'Unique Perspective',
-                    ])->columns(3),
-            ]);
+            ->schema(Speaker::getForm());
     }
 
     public static function table(Table $table): Table
@@ -65,8 +35,11 @@ class SpeakerResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('twitter_handle')
-                    ->searchable(),
+                Tables\Columns\ImageColumn::make('avatar')
+                    ->circular()
+                    ->defaultImageUrl(function($record) {
+                        return 'https://ui-avatars.com/api/?background=0DBABC&color=fff&name=' . urlencode($record->name);
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

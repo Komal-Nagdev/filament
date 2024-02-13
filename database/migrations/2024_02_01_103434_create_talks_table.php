@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->string('abstract');
+            $table->string('length')->default('lightning');
+            $table->string('status')->default('approved');
+            $table->string('new_talk')->default(true);
             $table->foreignId('speaker_id');
             $table->timestamps();
         });

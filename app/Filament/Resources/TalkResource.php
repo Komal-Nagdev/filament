@@ -2,16 +2,17 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\TalkResource\Pages;
-use App\Filament\Resources\TalkResource\RelationManagers;
-use App\Models\Talk;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
+use App\Models\Talk;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
+use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\TalkResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\TalkResource\RelationManagers;
 
 class TalkResource extends Resource
 {
@@ -22,30 +23,52 @@ class TalkResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            ->schema([
-                Forms\Components\TextInput::make('title')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('abstract')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Select::make('speaker_id')
-                    ->relationship('speaker', 'name')
-                    ->required(),
-            ]);
+            ->schema(Talk::getForm());
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->persistFiltersInSession()
             ->columns([
                 Tables\Columns\TextColumn::make('title')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('abstract')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable()
+                    ->description(function(Talk $record) {
+                        return Str::of($record->abstract)->limit(40);
+                    }),
+                // Tables\Columns\TextColumn::make('abstract')
+                //     ->searchable(),
                 Tables\Columns\TextColumn::make('speaker.name')
-                    ->numeric()
+                    ->searchable()
                     ->sortable(),
+                Tables\Columns\ImageColumn::make('speaker.avatar')
+                    ->circular()
+                    ->label('Avatar')
+                    ->defaultImageUrl(function($record) {
+                        return 'https://ui-avatars.com/api/?background=0DBABC&color=fff&name=' . urlencode($record->speaker->name);
+                    }),
+                Tables\Columns\BooleanColumn::make('new_talk')
+                    ->toggle(),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->sortable()
+                    ->color(fn (string $state): string => match ($state) {
+                        'submitted' => 'gray',
+                        'approved' => 'success',
+                        'rejected' => 'danger',
+                    })
+                    ->icon(fn (string $state): string => match ($state) {
+                        'submitted' => 'heroicon-m-chevron-right',
+                        'approved' => 'heroicon-m-check-badge',
+                        'rejected' => 'heroicon-m-backspace',
+                    }),
+                Tables\Columns\IconColumn::make('length')
+                    ->icon(fn (string $state): string => match ($state) {
+                        'lightning' => 'heroicon-m-bolt',
+                        'normal' => 'heroicon-m-megaphone',
+                        'keynote' => 'heroicon-m-key',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -56,7 +79,27 @@ class TalkResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\TernaryFilter::make('new_talk'),
+                Tables\Filters\SelectFilter::make('status')
+                ->multiple()
+                ->options([
+                    'submitted' => 'Submitted',
+                    'approved' => 'Approved',
+                    'rejected' => 'Rejected',
+                ]),
+                Tables\Filters\SelectFilter::make('speaker')
+                    ->relationship('speaker', 'name')
+                    ->multiple()
+                    ->searchable()
+                    ->preload(),
+                Tables\Filters\Filter::make('has_avatar')
+                    ->label('show only speakers with avatars')
+                    ->toggle()
+                    ->query(function($query){
+                        return $query->whereHas('speaker', function(Builder $query){
+                            $query->whereNotNull('avatar');
+                        });
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
