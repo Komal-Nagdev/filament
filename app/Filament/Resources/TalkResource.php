@@ -13,6 +13,10 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\TalkResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\TalkResource\RelationManagers;
+use Filament\Notifications\Notification;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\ActionGroup;
+use Illuminate\Database\Eloquent\Collection;
 
 class TalkResource extends Resource
 {
@@ -101,12 +105,55 @@ class TalkResource extends Resource
                         });
                     }),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->actions(
+            [
+                Tables\Actions\EditAction::make()
+                    ->slideOver(),
+                Tables\Actions\ActionGroup::make(
+                [
+                    Tables\Actions\Action::make('Approve')
+                        ->visible(function($record){
+                            return $record->status !== 'approved';
+                        })
+                        ->color('success')
+                        ->icon('heroicon-o-check-circle')
+                        ->action(function(Talk $record) {
+                            $record->approve();
+                        })->after(function(){
+                            Notification::make()->success()->title('The talk was approved')
+                                ->body('The speaker has been notified')
+                                ->duration(1000)
+                                ->send();
+                        }),
+                    Tables\Actions\Action::make('Reject')
+                        ->visible(function($record){
+                            return $record->status !== 'rejected';
+                        })
+                        ->color('danger')
+                        ->icon('heroicon-m-backspace')
+                        ->requiresConfirmation()
+                        ->action(function(Talk $record) {
+                            $record->reject();
+                        })->after(function(){
+                            Notification::make()->danger()->title('The talk was rejected')
+                                ->body('The speaker has been notified')
+                                ->duration(1000)
+                                ->send();
+                        }),
+                ]),
+                
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('Approve')
+                        ->action(function(Collection $records) {
+                            $records->each->approve();
+                        }),
+                    Tables\Actions\BulkAction::make('Reject')
+                        ->action(function(Collection $records) {
+                            $records->each->reject();
+                        })
                 ]),
             ]);
     }
@@ -123,7 +170,7 @@ class TalkResource extends Resource
         return [
             'index' => Pages\ListTalks::route('/'),
             'create' => Pages\CreateTalk::route('/create'),
-            'edit' => Pages\EditTalk::route('/{record}/edit'),
+            // 'edit' => Pages\EditTalk::route('/{record}/edit'),
         ];
     }
 }

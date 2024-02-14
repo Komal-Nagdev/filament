@@ -55,10 +55,23 @@ class Talk extends Model
             Forms\Components\Select::make('status')
                 ->options(self::TALK_STATUS)
                 ->required(),
-            Forms\Components\TextInput::make('abstract')
+            Forms\Components\Textarea::make('abstract')
+                ->rows(4)
+                ->columnSpanFull()
                 ->required()
                 ->maxLength(255),
         ];
     }
 
+    public function approve() : void 
+    {
+        $this->status = 'approved';
+        $this->save();
+    }
+
+    public function reject() : void 
+    {
+        $this->status = 'rejected';
+        $this->save();
+    }
 }
