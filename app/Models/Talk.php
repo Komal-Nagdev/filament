@@ -74,4 +74,5 @@ class Talk extends Model
         $this->status = 'rejected';
         $this->save();
     }
+
 }

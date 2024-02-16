@@ -22,7 +22,9 @@ class TalkResource extends Resource
 {
     protected static ?string $model = Talk::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-speaker-wave';
+
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
@@ -48,10 +50,10 @@ class TalkResource extends Resource
                     ->sortable(),
                 Tables\Columns\ImageColumn::make('speaker.avatar')
                     ->circular()
-                    ->label('Avatar')
-                    ->defaultImageUrl(function($record) {
-                        return 'https://ui-avatars.com/api/?background=0DBABC&color=fff&name=' . urlencode($record->speaker->name);
-                    }),
+                    ->label('Avatar'),
+                    // ->defaultImageUrl(function($record) {
+                    //     return 'https://ui-avatars.com/api/?background=0DBABC&color=fff&name=' . urlencode($record->speaker->name);
+                    // }),
                 Tables\Columns\BooleanColumn::make('new_talk')
                     ->toggle(),
                 Tables\Columns\TextColumn::make('status')
