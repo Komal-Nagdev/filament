@@ -2,10 +2,11 @@
 
 namespace App\Filament\Resources\SpeakerResource\Pages;
 
-use App\Filament\Resources\SpeakerResource;
-use App\Models\Speaker;
 use Filament\Actions;
+use App\Models\Speaker;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use App\Filament\Resources\SpeakerResource;
 
 class ViewSpeaker extends ViewRecord
 {
@@ -17,7 +18,17 @@ class ViewSpeaker extends ViewRecord
             Actions\EditAction::make()
                 ->slideOver()
                 ->form(Speaker::getForm()),
-            Actions\DeleteAction::make(),
+            Actions\DeleteAction::make()
+            ->before(function ($record, Actions\DeleteAction $action) {
+                if($record->talks()->count() > 0) {
+                Notification::make()
+                    ->title('Errors!')
+                    ->body("You can't delete this speaker because some talks are assigned.")
+                    ->status('danger')
+                    ->send();
+                    $action->cancel();
+                }
+            }),
         ];
     }
 }

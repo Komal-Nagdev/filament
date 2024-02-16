@@ -39,7 +39,7 @@ class Talk extends Model
         return $this->belongsToMany(Conference::class);
     }
 
-    public static function getForm()
+    public static function getForm($speakerId = null)
     {
         return
         [
@@ -47,6 +47,9 @@ class Talk extends Model
                 ->required()
                 ->maxLength(255),
             Forms\Components\Select::make('speaker_id')
+                ->hidden(function () use($speakerId) {
+                    return $speakerId !== null;
+                })
                 ->relationship('speaker', 'name')
                 ->required(),
             Forms\Components\Select::make('length')
@@ -55,8 +58,7 @@ class Talk extends Model
             Forms\Components\Select::make('status')
                 ->options(self::TALK_STATUS)
                 ->required(),
-            Forms\Components\Textarea::make('abstract')
-                ->rows(4)
+            Forms\Components\RichEditor::make('abstract')
                 ->columnSpanFull()
                 ->required()
                 ->maxLength(255),

@@ -18,6 +18,7 @@ use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\ImageColumn;
 
 class SpeakerResource extends Resource
@@ -125,7 +126,7 @@ class SpeakerResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+                RelationManagers\TalksRelationManager::class,
         ];
     }
 
